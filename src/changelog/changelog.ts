@@ -5,7 +5,7 @@ import type { Configuration } from './configuration.js';
 import findPullRequestId from './find-pull-request-id.js';
 import * as Git from './git.js';
 import GithubAPI from './github-api.js';
-import type { GitHubContributor } from './github-api.js';
+import type { GitHubContributor, GitHubIssueResponse } from './github-api.js';
 import type { CommitInfo, Release } from './interfaces.js';
 import MarkdownRenderer, { UNRELEASED_TAG } from './markdown-renderer.js';
 
@@ -168,6 +168,26 @@ export default class Changelog {
     return labels.some((label) => configured.includes(label.toLowerCase()));
   }
 
+  /**
+   * Runs before `ignoreCommitters` and the committer list,
+   * so both see the new login.
+   */
+  private renameCommitter(issue: GitHubIssueResponse): GitHubIssueResponse {
+    const login = issue.user.login.toLowerCase();
+    const from = Object.keys(this.config.renameCommitters).find(
+      (name) => name.toLowerCase() === login,
+    );
+    if (!from) {
+      return issue;
+    }
+
+    const to = this.config.renameCommitters[from];
+    return {
+      ...issue,
+      user: { ...issue.user, login: to, html_url: this.github.getUserUrl(to) },
+    };
+  }
+
   private ignoreCommitter(login: string): boolean {
     return this.config.ignoreCommitters.some(
       (c: string) => c === login || login.indexOf(c) > -1,
@@ -202,10 +222,11 @@ export default class Changelog {
       commitInfos,
       async (commitInfo: CommitInfo) => {
         if (commitInfo.issueNumber) {
-          commitInfo.githubIssue = await this.github.getIssueData(
+          const issue = await this.github.getIssueData(
             this.config.repo,
             commitInfo.issueNumber,
           );
+          commitInfo.githubIssue = this.renameCommitter(issue);
         }
       },
       { concurrency: 5 },

@@ -45,6 +45,10 @@ export default class GithubAPI {
     }
   }
 
+  public getUserUrl(login: string): string {
+    return `https://${this.github}/${login}`;
+  }
+
   public getBaseIssueUrl(repo: string): string {
     return `https://${this.github}/${repo}/issues/`;
   }
