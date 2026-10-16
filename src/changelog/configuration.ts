@@ -19,7 +19,6 @@ export interface Configuration {
   ignoreCommitters: string[];
   ignoreLabel: string;
   cacheDir?: string;
-  ignoreReleases?: boolean;
   nextVersion: string | undefined;
   wildcardLabel?: string;
   packages: PackageLocation[];
@@ -27,7 +26,6 @@ export interface Configuration {
 
 export interface ConfigLoaderOptions {
   nextVersion?: string;
-  ignoreReleases?: boolean;
   packages?: PackageLocation[];
 }
 
@@ -108,7 +106,6 @@ export function fromPath(
     ignoreCommitters,
     ignoreLabel,
     cacheDir,
-    ignoreReleases: options.ignoreReleases,
     wildcardLabel,
     packages: options.packages ?? [],
     github,

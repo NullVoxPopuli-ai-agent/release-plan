@@ -4,8 +4,22 @@ Release Plan generates a changelog from the titles of your pull requests. The
 generator is a port of
 [`github-changelog`](https://github.com/release-plan/github-changelog).
 
-By default the changelog lists the pull requests that were merged after the
-latest tag. A pull request needs one of these labels to appear:
+Release Plan reads the git history of each published package. For each
+package, it lists the pull requests that changed files in that package after
+the last release of that package. A pull request that changes no published
+package does not appear, and it does not need a label.
+
+To find the last release of a package, Release Plan uses the first of these
+that it finds:
+
+1. The git tag that `release-plan publish` made for the current version
+2. The `gitHead` that npm recorded for the current version
+3. The commit that set the current version in `package.json`
+
+If npm does not have the current version, all of the history of the package
+is unreleased.
+
+A pull request needs one of these labels to appear:
 
 - `breaking` (:boom: Breaking Change)
 - `enhancement` (:rocket: Enhancement)

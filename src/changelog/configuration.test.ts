@@ -69,12 +69,8 @@ describe('Configuration', function () {
         changelog: { repo: 'foo/bar', nextVersion: 'next' },
       });
 
-      const result = fromPath(tmpDir, {
-        nextVersion: 'Release',
-        ignoreReleases: true,
-      });
+      const result = fromPath(tmpDir, { nextVersion: 'Release' });
       expect(result.nextVersion).toEqual('Release');
-      expect(result.ignoreReleases).toEqual(true);
     });
 
     it('fills in the default labels and ignored committers', function () {

@@ -16,7 +16,7 @@ release, and publishing to NPM.
 
 ## `gather-changes`  
 
-Builds a description of all the PRs merged since the last tag, grouped by their GitHub labels.
+Builds a description of the PRs that changed each published package since the last release of that package, grouped by their GitHub labels.
 
 ## `parse-changes`
 
