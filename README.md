@@ -2,6 +2,20 @@
 
 _The most contributor friendly and hands-off release tool there is_.
 
+## Why this fork
+
+This is a fork of [release-plan](https://github.com/release-plan/release-plan). The changes are also open upstream in release-plan/release-plan#279 and release-plan/release-plan#285.
+
+|                          | `release-plan`                                       | `@nullvoxpopuli/release-plan`                                                |
+| ------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
+| How changes are found    | All PRs since the last tag of any package            | `git log` of each published package, since the last release of that package |
+| PRs that need a label    | Every PR in that range                               | Only PRs that change a published package                                     |
+| Packages with `ignore`   | Their tags still set the range for other packages    | Do not affect other packages                                                 |
+| Changelog code           | The `github-changelog` dependency                    | Built in                                                                     |
+| Changelog config         | `changelog` key in `package.json`, or `lerna.json`   | `release-plan` key in the root `package.json`                                |
+| Bot PRs, like dependabot | Ignored                                              | Count like other PRs                                                         |
+| Install                  | `release-plan`                                       | `@nullvoxpopuli/release-plan` (the command is still `release-plan`)          |
+
 ## Features
 
 - ✨ No manual steps[^after-initial-setup]
