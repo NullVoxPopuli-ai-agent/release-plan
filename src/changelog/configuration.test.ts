@@ -23,19 +23,6 @@ describe('Configuration', function () {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    it("reads the configuration from 'lerna.json'", function () {
-      writeJson(path.join(tmpDir, 'lerna.json'), {
-        changelog: { repo: 'foo/bar', nextVersion: 'next' },
-      });
-      writeJson(path.join(tmpDir, 'package.json'), {
-        name: 'bar',
-      });
-
-      const result = fromPath(tmpDir);
-      expect(result.nextVersion).toEqual('next');
-      expect(result.repo).toEqual('foo/bar');
-    });
-
     it("reads the configuration from 'package.json'", function () {
       writeJson(path.join(tmpDir, 'package.json'), {
         changelog: { repo: 'foo/bar', nextVersion: 'next' },
@@ -46,21 +33,18 @@ describe('Configuration', function () {
       expect(result.repo).toEqual('foo/bar');
     });
 
-    it("prefers 'package.json' over 'lerna.json'", function () {
+    it("does not read 'lerna.json'", function () {
       writeJson(path.join(tmpDir, 'lerna.json'), {
-        changelog: { repo: 'foo/lerna', nextVersion: 'lerna' },
+        changelog: { repo: 'foo/lerna' },
       });
-
       writeJson(path.join(tmpDir, 'package.json'), {
-        changelog: { repo: 'foo/package', nextVersion: 'package' },
+        repository: 'https://github.com/foo/package',
       });
 
-      const result = fromPath(tmpDir);
-      expect(result.nextVersion).toEqual('package');
-      expect(result.repo).toEqual('foo/package');
+      expect(fromPath(tmpDir).repo).toEqual('foo/package');
     });
 
-    it("throws ConfigurationError if neither 'package.json' nor 'lerna.json' exist", function () {
+    it("throws ConfigurationError if 'package.json' does not exist", function () {
       expect(() => fromPath(tmpDir)).toThrowError(ConfigurationError);
     });
 

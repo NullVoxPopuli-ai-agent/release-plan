@@ -38,8 +38,7 @@ export function fromPath(
   rootPath: string,
   options: ConfigLoaderOptions = {},
 ): Configuration {
-  const config: Partial<Configuration> =
-    fromPackageConfig(rootPath) || fromLernaConfig(rootPath) || {};
+  const config: Partial<Configuration> = fromPackageConfig(rootPath) || {};
 
   const { cacheDir, github } = config;
   let {
@@ -102,13 +101,6 @@ export function fromPath(
     packages: options.packages ?? [],
     github,
   };
-}
-
-function fromLernaConfig(rootPath: string): Partial<Configuration> | undefined {
-  const lernaPath = path.join(rootPath, 'lerna.json');
-  if (fs.existsSync(lernaPath)) {
-    return JSON.parse(fs.readFileSync(lernaPath, 'utf8')).changelog;
-  }
 }
 
 function fromPackageConfig(
