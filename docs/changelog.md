@@ -64,6 +64,11 @@ The supported options are:
   from bots such as `dependabot[bot]` count like other PRs. A dependency
   update in a published package then causes a release of that package.
 
+- `renameCommitters`: An object that maps a GitHub login to the login that
+  gets the credit. The PR links to the new login, and the "Committers" list
+  shows the new login. The match ignores case. `ignoreCommitters` sees the
+  new login. For example, `{ "NullVoxPopuli-ai-agent": "NullVoxPopuli" }`.
+
 Older versions read these options from a `changelog` key. Release Plan still
 reads that key, but it prints a warning. If both keys set an option, the
 `release-plan` key wins.

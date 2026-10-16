@@ -83,6 +83,27 @@ describe('Configuration', function () {
       warn.mockRestore();
     });
 
+    it("reads 'renameCommitters' from the 'release-plan' key", function () {
+      writeJson(path.join(tmpDir, 'package.json'), {
+        'release-plan': {
+          repo: 'foo/bar',
+          renameCommitters: { 'NullVoxPopuli-ai-agent': 'NullVoxPopuli' },
+        },
+      });
+
+      expect(fromPath(tmpDir).renameCommitters).toEqual({
+        'NullVoxPopuli-ai-agent': 'NullVoxPopuli',
+      });
+    });
+
+    it("defaults 'renameCommitters' to an empty object", function () {
+      writeJson(path.join(tmpDir, 'package.json'), {
+        'release-plan': { repo: 'foo/bar' },
+      });
+
+      expect(fromPath(tmpDir).renameCommitters).toEqual({});
+    });
+
     it("warns that 'cacheDir' does nothing", function () {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       writeJson(path.join(tmpDir, 'package.json'), {

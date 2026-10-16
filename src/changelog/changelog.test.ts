@@ -49,6 +49,7 @@ const defaultConfig: Configuration = {
     'Type: Maintenance': ':house: Maintenance',
   },
   ignoreCommitters: [],
+  renameCommitters: {},
   ignoreLabel: 'ignore',
   nextVersion: 'Unreleased',
   packages: [],
@@ -563,6 +564,45 @@ describe('listChanges', () => {
       const commits = await changelog.listChanges(allPackages);
 
       expect(prNumbers(commits)).not.toContain(6);
+    });
+  });
+
+  describe('renameCommitters', () => {
+    it('credits the PRs of one login to another login', async () => {
+      useFixtures(listOfPackagesForEachCommit);
+      const changelog = new TestChangelog({
+        renameCommitters: { 'Bot-User': 'luke' },
+        packages: fixturePackages,
+      });
+
+      const commits = await changelog.listChanges(allPackages);
+      const pr8 = commits.find((c) => c.githubIssue?.number === 8)!;
+      expect(pr8.githubIssue!.user.login).toEqual('luke');
+      expect(pr8.githubIssue!.user.html_url).toEqual('https://github.com/luke');
+
+      const markdown = await changelog.renderMarkdown(commits);
+      expect(markdown).not.toContain('bot-user');
+      expect(markdown.match(/^- .*@luke/gm)).toHaveLength(1);
+    });
+
+    it('applies ignoreCommitters to the new login', async () => {
+      useFixtures(listOfPackagesForEachCommit);
+      const url =
+        'https://api.github.com/repos/embroider-build/github-changelog/issues/8';
+      const issue = issuesCache[url].body as { labels: { name: string }[] };
+      mockResponses[url] = {
+        body: { ...issue, labels: [{ name: 'Status: In Progress' }] },
+      };
+
+      const changelog = new TestChangelog({
+        renameCommitters: { 'bot-user': 'renamed-bot' },
+        ignoreCommitters: ['renamed-bot'],
+        packages: fixturePackages,
+      });
+
+      expect(prNumbers(await changelog.listChanges(allPackages))).not.toContain(
+        8,
+      );
     });
   });
 

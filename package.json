@@ -80,6 +80,9 @@
       "dependabot[bot]",
       "renovate[bot]"
     ],
+    "renameCommitters": {
+      "NullVoxPopuli-ai-agent": "NullVoxPopuli"
+    },
     "semverIncrementAs": {
       "major": "minor"
     }

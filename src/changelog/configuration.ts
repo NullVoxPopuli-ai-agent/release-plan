@@ -17,6 +17,8 @@ export interface Configuration {
   rootPath: string;
   labels: { [key: string]: string };
   ignoreCommitters: string[];
+  /** GitHub login to the login that gets the credit */
+  renameCommitters: { [login: string]: string };
   ignoreLabel: string;
   nextVersion: string | undefined;
   wildcardLabel?: string;
@@ -41,7 +43,14 @@ export function fromPath(
 
   const { github } = config;
   const nextVersion = options.nextVersion;
-  let { repo, labels, ignoreCommitters, ignoreLabel, wildcardLabel } = config;
+  let {
+    repo,
+    labels,
+    ignoreCommitters,
+    renameCommitters,
+    ignoreLabel,
+    wildcardLabel,
+  } = config;
 
   if (!repo) {
     repo = findRepo(rootPath);
@@ -74,6 +83,10 @@ export function fromPath(
     ignoreCommitters = [];
   }
 
+  if (!renameCommitters) {
+    renameCommitters = {};
+  }
+
   if (!ignoreLabel) {
     ignoreLabel = 'ignore';
   }
@@ -84,6 +97,7 @@ export function fromPath(
     rootPath,
     labels,
     ignoreCommitters,
+    renameCommitters,
     ignoreLabel,
     wildcardLabel,
     packages: options.packages ?? [],
@@ -101,6 +115,7 @@ const repoOptions = [
   'github',
   'labels',
   'ignoreCommitters',
+  'renameCommitters',
   'ignoreLabel',
   'wildcardLabel',
 ] as const;
