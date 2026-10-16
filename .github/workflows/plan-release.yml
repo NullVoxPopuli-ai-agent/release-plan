@@ -3,8 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - master
+      - next
   pull_request_target: # This workflow has permissions on the repo, do NOT run code from PRs in this workflow. See https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
     types:
       - labeled
@@ -23,7 +22,7 @@ jobs:
     steps:
       - uses: release-plan/actions/should-prepare-release@v1
         with:
-          ref: "main"
+          ref: "next"
         id: should-prepare
 
   create-prepare-release-pr:
@@ -42,7 +41,7 @@ jobs:
         # github-changelog can discover what's changed since the last release
         with:
           fetch-depth: 0
-          ref: "main"
+          ref: "next"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
