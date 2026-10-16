@@ -73,7 +73,7 @@ describe('Configuration', function () {
       expect(result.nextVersion).toEqual('Release');
     });
 
-    it('fills in the default labels and ignored committers', function () {
+    it('fills in the default labels and ignores no committers', function () {
       writeJson(path.join(tmpDir, 'package.json'), {
         changelog: { repo: 'foo/bar' },
       });
@@ -87,7 +87,7 @@ describe('Configuration', function () {
         '_github-changelog_unlabeled_': ':present: Additional updates',
       });
       expect(result.ignoreLabel).toEqual('ignore');
-      expect(result.ignoreCommitters).toContain('dependabot[bot]');
+      expect(result.ignoreCommitters).toEqual([]);
     });
   });
 

@@ -60,7 +60,9 @@ The supported options are:
   value. [Read more about this option](#wildcardlabel).
 
 - `ignoreCommitters`: List of committers to ignore (exact or partial match).
-  Useful for example to ignore commits from bots.
+  The default is an empty list, so PRs from bots such as `dependabot[bot]`
+  count like other PRs. A dependency update in a published package then
+  causes a release of that package.
 
 - `cacheDir`: Path to a GitHub API response cache to avoid throttling
   (e.g. `.changelog`)

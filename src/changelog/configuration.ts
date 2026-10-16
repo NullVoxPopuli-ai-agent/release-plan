@@ -83,15 +83,7 @@ export function fromPath(
   }
 
   if (!ignoreCommitters) {
-    ignoreCommitters = [
-      'dependabot-bot',
-      'dependabot[bot]',
-      'dependabot-preview[bot]',
-      'greenkeeperio-bot',
-      'greenkeeper[bot]',
-      'renovate-bot',
-      'renovate[bot]',
-    ];
+    ignoreCommitters = [];
   }
 
   if (!ignoreLabel) {
