@@ -1,5 +1,5 @@
 {
-  "name": "release-plan",
+  "name": "@nullvoxpopuli/release-plan",
   "version": "0.20.1",
   "description": "",
   "keywords": [],
@@ -10,7 +10,9 @@
     "Chris Manson <chris@manson.ie>"
   ],
   "type": "module",
-  "bin": "./dist/cli.js",
+  "bin": {
+    "release-plan": "./dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "format": "prettier . --cache --write",
@@ -70,6 +72,9 @@
   "packageManager": "pnpm@10.4.1",
   "engines": {
     "node": "22.* || 24.* || >= 26"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "release-plan": {
     "semverIncrementAs": {

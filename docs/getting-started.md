@@ -40,15 +40,15 @@ which is responsible for automating the process that you'd run through manually 
 ::: code-group
 
 ```bash [npm]
-npm i --save-dev release-plan
+npm i --save-dev @nullvoxpopuli/release-plan
 ```
 
 ```bash [pnpm]
-pnpm add -D release-plan
+pnpm add -D @nullvoxpopuli/release-plan
 ```
 
 ```bash [Yarn]
-yarn add -D release-plan
+yarn add -D @nullvoxpopuli/release-plan
 ```
 
 :::
