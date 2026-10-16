@@ -17,13 +17,64 @@ export async function changedPaths(sha: string): Promise<string[]> {
   return result.stdout.split('\n');
 }
 
-export function lastTag(): string {
-  return execaSync('git', [
-    'describe',
-    '--abbrev=0',
-    '--tags',
+/**
+ * The commit that a tag, sha, or other ref points at,
+ * or undefined when the ref does not exist in this clone.
+ */
+export function commitFor(ref: string): string | undefined {
+  const result = execaSync(
+    'git',
+    ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`],
+    { reject: false },
+  );
+  return result.exitCode === 0 ? result.stdout : undefined;
+}
+
+export function isAncestor(ref: string, of: string = 'HEAD'): boolean {
+  return (
+    execaSync('git', ['merge-base', '--is-ancestor', ref, of], {
+      reject: false,
+    }).exitCode === 0
+  );
+}
+
+/**
+ * The newest first-parent commit that changed the "version" line
+ * of a package.json.
+ *
+ * A release PR that lands as a merge commit changes the version
+ * in a side commit, so merges are diffed against their first parent.
+ */
+export function lastVersionChange(pkgJSONPath: string): string | undefined {
+  const sha = execaSync('git', [
+    'log',
+    '-1',
     '--first-parent',
-  ]).stdout;
+    '--diff-merges=first-parent',
+    '--no-patch',
+    '--format=%H',
+    '-G',
+    '^[[:space:]]*"version"[[:space:]]*:',
+    'HEAD',
+    '--',
+    pkgJSONPath,
+  ]).stdout.trim();
+  return sha || undefined;
+}
+
+/**
+ * Position of each commit on the first-parent chain of HEAD,
+ * newest first.
+ */
+export function firstParentOrder(): Map<string, number> {
+  const order = new Map<string, number>();
+  const shas = execaSync('git', ['rev-list', '--first-parent', 'HEAD'])
+    .stdout.split('\n')
+    .filter(Boolean);
+  for (let i = 0; i < shas.length; i++) {
+    order.set(shas[i], i);
+  }
+  return order;
 }
 
 export interface CommitListItem {
@@ -49,14 +100,24 @@ export function parseLogMessage(commit: string): CommitListItem | null {
   };
 }
 
-export function listCommits(from: string, to: string = ''): CommitListItem[] {
+/**
+ * First-parent commits after `from` (or all of history when `from` is
+ * undefined) up to `to` that change something under `paths`.
+ */
+export function listCommits(
+  from: string | undefined,
+  to: string = 'HEAD',
+  paths: string[] = [],
+): CommitListItem[] {
   // the format is parsed by `parseLogMessage`
   return execaSync('git', [
     'log',
-    '--oneline',
-    '--pretty=hash<%h> ref<%D> message<%s> date<%cd>',
+    '--first-parent',
+    '--pretty=hash<%H> ref<%D> message<%s> date<%cd>',
     '--date=short',
-    `${from}..${to}`,
+    from ? `${from}..${to}` : to,
+    '--',
+    ...paths,
   ])
     .stdout.split('\n')
     .filter(Boolean)

@@ -2,11 +2,13 @@ import { vi, describe, beforeEach, afterEach, it, expect } from 'vitest';
 
 import * as git from './git.js';
 import Changelog from './changelog.js';
+import type { PackageRange } from './changelog.js';
+import type { CommitInfo } from './interfaces.js';
 import type { Configuration } from './configuration.js';
 
 vi.mock('./git.js', () => ({
-  lastTag: vi.fn(),
   listCommits: vi.fn(),
+  firstParentOrder: vi.fn(),
   changedPaths: vi.fn(),
   getRootPath: vi.fn(),
 }));
@@ -75,7 +77,7 @@ class TestChangelog extends Changelog {
 }
 
 const mocked = {
-  lastTag: vi.mocked(git.lastTag),
+  firstParentOrder: vi.mocked(git.firstParentOrder),
   listCommits: vi.mocked(git.listCommits),
   changedPaths: vi.mocked(git.changedPaths),
 };
@@ -204,26 +206,6 @@ const listOfPackagesForEachCommit: Record<string, string[]> = {
     'packages/rogue-one/mission.js',
   ],
   a0000015: ['packages/untitled/script.md'],
-  a0000016: ['packages/return-of-the-jedi/package.json'],
-  a0000017: ['packages/return-of-the-jedi/package.json'],
-};
-
-const listOfFileForEachCommit: Record<string, string[]> = {
-  a0000001: ['random/foo.js'],
-  a0000002: ['random/package.json'],
-  a0000003: ['a-new-hope/rebels.js'],
-  a0000004: ['a-new-hope/package.json'],
-  a0000005: ['empire-strikes-back/death-star.js'],
-  a0000006: ['empire-strikes-back/death-star.js'],
-  a0000007: ['empire-strikes-back/hoth.js'],
-  a0000008: ['empire-strikes-back/hoth.js'],
-  a0000009: ['empire-strikes-back/package.json'],
-  a0000010: ['return-of-the-jedi/jabba-the-hutt.js'],
-  a0000011: ['return-of-the-jedi/vader-luke.js'],
-  a0000012: ['return-of-the-jedi/leia.js'],
-  a0000013: ['return-of-the-jedi/package.json'],
-  a0000014: ['the-force-awakens/mission.js', 'rogue-one/mission.js'],
-  a0000015: ['untitled/script.md'],
   a0000016: ['packages/return-of-the-jedi/package.json'],
   a0000017: ['packages/return-of-the-jedi/package.json'],
 };
@@ -393,7 +375,13 @@ const issuesCache: Record<string, MockResponse> = {
   },
 };
 
-describe('createMarkdown', () => {
+function range(name: string, from?: string): PackageRange {
+  return { name, path: `${ROOT}/packages/${name}`, from };
+}
+
+const allPackages = fixturePackages.map((p) => range(p.name));
+
+describe('listChanges', () => {
   beforeEach(() => {
     process.env.GITHUB_AUTH = 'test-token';
     mockResponses = {};
@@ -403,109 +391,161 @@ describe('createMarkdown', () => {
     vi.resetAllMocks();
   });
 
-  function useFixtures(paths: Record<string, string[]>) {
-    mocked.changedPaths.mockImplementation(async (sha) => paths[sha]);
-    mocked.lastTag.mockImplementation(() => 'v8.0.0');
-    mocked.listCommits.mockImplementation(() => listOfCommits);
+  /**
+   * A fake git where `listCommits` answers from the fixture,
+   * in the same way as `git log --first-parent from..HEAD -- dir`.
+   */
+  function useFixtures(
+    paths: Record<string, string[]>,
+    commits: git.CommitListItem[] = listOfCommits,
+  ) {
+    const order = new Map(commits.map((c, i) => [c.sha, i]));
+    mocked.firstParentOrder.mockImplementation(() => order);
+    mocked.changedPaths.mockImplementation(async (sha) => paths[sha] ?? []);
+    mocked.listCommits.mockImplementation((from, _to, dirs = []) =>
+      commits.filter(
+        (c) =>
+          (from === undefined || order.get(c.sha)! < order.get(from)!) &&
+          (paths[c.sha] ?? []).some((file) =>
+            dirs.some((dir) => `${ROOT}/${file}`.startsWith(`${dir}/`)),
+          ),
+      ),
+    );
     mockResponses = { ...usersCache, ...issuesCache };
   }
+
+  function prNumbers(commits: CommitInfo[]) {
+    return commits.map((c) => c.githubIssue!.number);
+  }
+
+  it('renders the changes of every package since its own last release', async () => {
+    useFixtures(listOfPackagesForEachCommit);
+
+    const changelog = new TestChangelog({ packages: fixturePackages });
+    const commits = await changelog.listChanges([
+      range('random'),
+      range('a-new-hope', 'a0000004'),
+      range('empire-strikes-back', 'a0000009'),
+      range('return-of-the-jedi', 'a0000013'),
+      range('the-force-awakens'),
+      range('rogue-one'),
+      range('untitled'),
+    ]);
+
+    expect(await changelog.renderMarkdown(commits)).toMatchSnapshot();
+  });
+
+  it('leaves out commits from before the last release of the package', async () => {
+    useFixtures(listOfPackagesForEachCommit);
+    const changelog = new TestChangelog({ packages: fixturePackages });
+
+    expect(
+      prNumbers(await changelog.listChanges([range('a-new-hope')])),
+    ).toEqual([1]);
+    expect(
+      prNumbers(await changelog.listChanges([range('a-new-hope', 'a0000004')])),
+    ).toEqual([]);
+  });
+
+  it('counts a commit only for the packages whose range includes it', async () => {
+    useFixtures(listOfPackagesForEachCommit);
+    const changelog = new TestChangelog({ packages: fixturePackages });
+
+    const commits = await changelog.listChanges([
+      range('the-force-awakens'),
+      range('rogue-one', 'a0000014'),
+    ]);
+
+    expect(prNumbers(commits)).toEqual([7]);
+    expect(commits[0].packages).toEqual(['the-force-awakens']);
+  });
+
+  it('leaves out commits that change no package in the release', async () => {
+    useFixtures({
+      ...listOfPackagesForEachCommit,
+      a0000011: ['README.md'],
+    });
+    const changelog = new TestChangelog({ packages: fixturePackages });
+
+    const commits = await changelog.listChanges(allPackages);
+
+    expect(prNumbers(commits)).not.toContain(5);
+  });
+
+  it('lists commits in first-parent order, whatever the order of the packages', async () => {
+    useFixtures(listOfPackagesForEachCommit);
+    const changelog = new TestChangelog({ packages: fixturePackages });
+
+    const commits = await changelog.listChanges(
+      Array.from(allPackages).reverse(),
+    );
+
+    expect(commits.map((c) => c.commitSHA)).toEqual([
+      'a0000017',
+      'a0000014',
+      'a0000012',
+      'a0000011',
+      'a0000010',
+      'a0000008',
+      'a0000006',
+      'a0000003',
+    ]);
+  });
 
   describe('ignore config', () => {
     it('ignores PRs from bot users even if they were not the (merge) committer', async () => {
       useFixtures(listOfPackagesForEachCommit);
 
-      const changelog = new TestChangelog({
+      const withBots = new TestChangelog({ packages: fixturePackages });
+      const withoutBots = new TestChangelog({
         ignoreCommitters: ['bot-user'],
         packages: fixturePackages,
       });
 
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toMatchSnapshot();
+      expect(prNumbers(await withBots.listChanges(allPackages))).toContain(8);
+      expect(
+        prNumbers(await withoutBots.listChanges(allPackages)),
+      ).not.toContain(8);
     });
-  });
 
-  describe('single tags', () => {
-    it('outputs correct changelog', async () => {
+    it('ignores PRs with the ignore label', async () => {
       useFixtures(listOfPackagesForEachCommit);
+      const issue = issuesCache[
+        'https://api.github.com/repos/embroider-build/github-changelog/issues/6'
+      ].body as { labels: { name: string }[] };
+      mockResponses[
+        'https://api.github.com/repos/embroider-build/github-changelog/issues/6'
+      ] = { body: { ...issue, labels: [{ name: 'ignore' }] } };
 
       const changelog = new TestChangelog({ packages: fixturePackages });
+      const commits = await changelog.listChanges(allPackages);
 
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toMatchSnapshot();
-    });
-  });
-
-  describe('multiple tags', () => {
-    it('outputs correct changelog', async () => {
-      useFixtures(listOfPackagesForEachCommit);
-      mocked.listCommits.mockImplementation(() => [
-        {
-          sha: 'a0000004',
-          refName:
-            'tag: a-new-hope@4.0.0, tag: empire-strikes-back@5.0.0, tag: return-of-the-jedi@6.0.0',
-          summary: 'chore(release): releasing component',
-          date: '1977-05-25',
-        },
-        {
-          sha: 'a0000003',
-          refName: '',
-          summary: 'Merge pull request #1 from star-wars',
-          date: '1977-05-25',
-        },
-        {
-          sha: 'a0000002',
-          refName: 'tag: v0.1.0',
-          summary: 'chore(release): releasing component',
-          date: '1966-01-01',
-        },
-        {
-          sha: 'a0000001',
-          refName: '',
-          summary: 'fix: some random fix which will be ignored',
-          date: '1966-01-01',
-        },
-      ]);
-
-      const changelog = new TestChangelog({ packages: fixturePackages });
-
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toMatchSnapshot();
-    });
-  });
-
-  describe('single project', () => {
-    it('outputs correct changelog', async () => {
-      useFixtures(listOfFileForEachCommit);
-
-      const changelog = new TestChangelog({ packages: fixturePackages });
-
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toMatchSnapshot();
-    });
-  });
-
-  describe('ignoreReleases', () => {
-    it('collapses everything into the next release', async () => {
-      useFixtures(listOfPackagesForEachCommit);
-
-      const changelog = new TestChangelog({
-        packages: fixturePackages,
-        ignoreReleases: true,
-        nextVersion: 'Release',
-      });
-
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toMatchSnapshot();
+      expect(prNumbers(commits)).not.toContain(6);
     });
   });
 
   describe('package attribution', () => {
     it('attributes files outside every nested package to a published root', async () => {
+      useFixtures({ ...listOfPackagesForEachCommit, a0000011: ['README.md'] });
+
+      const changelog = new TestChangelog({
+        packages: [
+          { name: 'root', path: ROOT },
+          ...fixturePackages.filter((p) => p.name === 'a-new-hope'),
+        ],
+      });
+      const commits = await changelog.listChanges([
+        { name: 'root', path: ROOT, from: undefined },
+        range('a-new-hope'),
+      ]);
+
+      const markdown = await changelog.renderMarkdown(commits);
+      expect(markdown).toContain('* `a-new-hope`');
+      expect(markdown).toContain('* `root`');
+      expect(markdown).not.toContain('* Other');
+    });
+
+    it('gives a file in a nested package to the nested package only', async () => {
       useFixtures(listOfPackagesForEachCommit);
 
       const changelog = new TestChangelog({
@@ -513,22 +553,20 @@ describe('createMarkdown', () => {
           { name: 'root', path: ROOT },
           ...fixturePackages.filter((p) => p.name === 'a-new-hope'),
         ],
-        ignoreReleases: true,
-        nextVersion: 'Release',
       });
+      const commits = await changelog.listChanges([
+        { name: 'root', path: ROOT, from: undefined },
+        range('a-new-hope', 'a0000004'),
+      ]);
 
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toContain('* `a-new-hope`');
-      expect(markdown).toContain('* `root`');
-      expect(markdown).not.toContain('* Other');
+      expect(prNumbers(commits)).not.toContain(1);
+      for (const commit of commits) {
+        expect(commit.packages).toEqual(['root']);
+      }
     });
 
     it('does not confuse packages that share a path prefix', async () => {
-      useFixtures({
-        a0000003: ['packages/a-new-hope-2/rebels.js'],
-      });
-      mocked.listCommits.mockImplementation(() => [
+      useFixtures({ a0000003: ['packages/a-new-hope-2/rebels.js'] }, [
         {
           sha: 'a0000003',
           refName: '',
@@ -543,11 +581,12 @@ describe('createMarkdown', () => {
           { name: 'a-new-hope-2', path: `${ROOT}/packages/a-new-hope-2` },
         ],
       });
+      const commits = await changelog.listChanges([
+        range('a-new-hope'),
+        range('a-new-hope-2'),
+      ]);
 
-      const markdown = await changelog.createMarkdown();
-
-      expect(markdown).toContain('* `a-new-hope-2`');
-      expect(markdown).not.toContain('* `a-new-hope`\n');
+      expect(commits[0].packages).toEqual(['a-new-hope-2']);
     });
   });
 
@@ -559,7 +598,7 @@ describe('createMarkdown', () => {
       };
 
       it('aborts with the GitHub error message', async () => {
-        useFixtures(listOfFileForEachCommit);
+        useFixtures(listOfPackagesForEachCommit);
         const unauthorized = {
           status: 401,
           statusText: 'Unauthorized',
@@ -573,11 +612,12 @@ describe('createMarkdown', () => {
           ),
         };
 
-        const changelog = new TestChangelog();
-        await expect(changelog.createMarkdown()).rejects.toMatchObject({
+        const changelog = new TestChangelog({ packages: fixturePackages });
+        const listing = changelog.listChanges(allPackages);
+        await expect(listing).rejects.toMatchObject({
           message: expect.stringContaining('Fetch error: Unauthorized'),
         });
-        await expect(changelog.createMarkdown()).rejects.toMatchObject({
+        await expect(listing).rejects.toMatchObject({
           message: expect.stringContaining(JSON.stringify(badCredentials)),
         });
       });

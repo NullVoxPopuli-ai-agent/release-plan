@@ -9,6 +9,14 @@ import type { GitHubContributor } from './github-api.js';
 import type { CommitInfo, Release } from './interfaces.js';
 import MarkdownRenderer, { UNRELEASED_TAG } from './markdown-renderer.js';
 
+export interface PackageRange {
+  name: string;
+  /** absolute */
+  path: string;
+  /** the last release of this package, undefined when it was never released */
+  from: string | undefined;
+}
+
 export default class Changelog {
   private readonly config: Configuration;
   private github: GithubAPI;
@@ -28,48 +36,83 @@ export default class Changelog {
         (key) => this.config.labels[key],
       ),
       baseIssueUrl: this.github.getBaseIssueUrl(this.config.repo),
-      unreleasedName: this.config.nextVersion || 'Unreleased',
+      unreleasedName: this.config.nextVersion || 'Release',
     });
   }
 
-  public async createMarkdown(from?: string, to?: string) {
-    return this.renderMarkdown(await this.listReleases(from, to));
-  }
+  /**
+   * The commits that change each package since its own last release.
+   *
+   * `packages` on each commit lists only the packages where the commit
+   * is in the range.
+   *
+   * A commit can land after the last release of one package
+   * and before the last release of another.
+   * It then counts for the first package only.
+   */
+  public async listChanges(ranges: PackageRange[]): Promise<CommitInfo[]> {
+    const items = new Map<string, Git.CommitListItem>();
+    const candidates = new Map<string, Set<string>>();
 
-  public renderMarkdown(releases: Release[]): string {
-    return this.renderer.renderMarkdown(releases);
-  }
+    for (const range of ranges) {
+      for (const item of Git.listCommits(range.from, 'HEAD', [range.path])) {
+        items.set(item.sha, item);
+        let names = candidates.get(item.sha);
+        if (!names) {
+          names = new Set();
+          candidates.set(item.sha, names);
+        }
+        names.add(range.name);
+      }
+    }
 
-  public async listReleases(
-    from: string = Git.lastTag(),
-    to: string = 'HEAD',
-  ): Promise<Release[]> {
-    const commits = await this.getCommitInfos(from, to);
-    const releases = this.groupByRelease(commits);
-    await this.fillInContributors(releases);
-    return releases;
-  }
-
-  private async getCommitInfos(
-    from: string,
-    to: string,
-  ): Promise<CommitInfo[]> {
-    const commits = Git.listCommits(from, to);
-    let commitInfos = this.toCommitInfos(commits);
-
-    await this.downloadIssueData(commitInfos);
-
-    commitInfos = commitInfos.filter(
-      (c) =>
-        !c.githubIssue?.labels
-          .map((l) => l.name)
-          .includes(this.config.ignoreLabel),
+    const order = Git.firstParentOrder();
+    const sorted = Array.from(items.values()).sort(
+      (a, b) => order.get(a.sha)! - order.get(b.sha)!,
     );
 
-    this.fillInCategories(commitInfos);
-    await this.fillInPackages(commitInfos);
+    let commits = this.toCommitInfos(sorted);
+    await this.fillInPackages(commits);
+    for (const commit of commits) {
+      const names = candidates.get(commit.commitSHA)!;
+      commit.packages = (commit.packages ?? []).filter((name) =>
+        names.has(name),
+      );
+    }
+    commits = commits.filter((c) => c.packages!.length > 0);
 
-    return commitInfos;
+    await this.downloadIssueData(commits);
+
+    commits = commits.filter((c) => {
+      const login = c.githubIssue?.user.login;
+      return (
+        login &&
+        !this.ignoreCommitter(login) &&
+        !c
+          .githubIssue!.labels.map((l) => l.name)
+          .includes(this.config.ignoreLabel)
+      );
+    });
+
+    this.fillInCategories(commits);
+    return commits;
+  }
+
+  public async renderMarkdown(commits: CommitInfo[]): Promise<string> {
+    const release: Release = {
+      name: UNRELEASED_TAG,
+      date: this.getToday(),
+      commits,
+      contributors: await this.getCommitters(commits),
+    };
+    return this.renderer.renderMarkdown([release]);
+  }
+
+  /**
+   * A markdown list of the commits, for messages to the user.
+   */
+  public renderContributionList(commits: CommitInfo[]): string {
+    return this.renderer.renderContributionList(commits);
   }
 
   private async getListOfUniquePackages(sha: string): Promise<string[]> {
@@ -129,24 +172,13 @@ export default class Changelog {
 
   private toCommitInfos(commits: Git.CommitListItem[]): CommitInfo[] {
     return commits.map((commit) => {
-      const { sha, refName, summary: message, date } = commit;
-
-      let tagsInCommit;
-      if (refName.length > 1) {
-        const TAG_PREFIX = 'tag: ';
-
-        tagsInCommit = refName
-          .split(', ')
-          .filter((ref) => ref.startsWith(TAG_PREFIX))
-          .map((ref) => ref.slice(TAG_PREFIX.length));
-      }
+      const { sha, summary: message, date } = commit;
 
       const issueNumber = findPullRequestId(message);
 
       return {
         commitSHA: sha,
         message,
-        tags: tagsInCommit,
         issueNumber,
         date,
       } as CommitInfo;
@@ -166,42 +198,6 @@ export default class Changelog {
       },
       { concurrency: 5 },
     );
-  }
-
-  private groupByRelease(commits: CommitInfo[]): Release[] {
-    const releaseMap: { [id: string]: Release } = {};
-
-    const pushCommit = (currentTag: string, commit: CommitInfo) => {
-      if (!releaseMap[currentTag]) {
-        const date =
-          currentTag === UNRELEASED_TAG ? this.getToday() : commit.date;
-        releaseMap[currentTag] = { name: currentTag, date, commits: [] };
-      }
-
-      const prUserLogin = commit.githubIssue?.user.login;
-      if (prUserLogin && !this.ignoreCommitter(prUserLogin)) {
-        releaseMap[currentTag].commits.push(commit);
-      }
-    };
-
-    let currentTags = [UNRELEASED_TAG];
-    for (const commit of commits) {
-      if (this.config.ignoreReleases) {
-        pushCommit(UNRELEASED_TAG, commit);
-        continue;
-      }
-
-      if (commit.tags && commit.tags.length > 0) {
-        currentTags = commit.tags;
-      }
-
-      // a commit with several tags is listed under each of them
-      for (const currentTag of currentTags) {
-        pushCommit(currentTag, commit);
-      }
-    }
-
-    return Object.keys(releaseMap).map((tag) => releaseMap[tag]);
   }
 
   protected getToday() {
@@ -230,10 +226,6 @@ export default class Changelog {
       commit.categories = Object.keys(this.config.labels)
         .filter((label) => labels.indexOf(label.toLowerCase()) !== -1)
         .map((label) => this.config.labels[label]);
-
-      if (labels.includes(this.config.ignoreLabel)) {
-        commit.categories = [this.config.ignoreLabel];
-      }
     }
   }
 
@@ -245,12 +237,6 @@ export default class Changelog {
       },
       { concurrency: 5 },
     );
-  }
-
-  private async fillInContributors(releases: Release[]) {
-    for (const release of releases) {
-      release.contributors = await this.getCommitters(release.commits);
-    }
   }
 }
 

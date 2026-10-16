@@ -3,7 +3,6 @@ import type { GitHubIssueResponse, GitHubContributor } from './github-api.js';
 export interface CommitInfo {
   commitSHA: string;
   message: string;
-  tags?: string[];
   date: string;
   issueNumber: string | null;
   githubIssue?: GitHubIssueResponse;
