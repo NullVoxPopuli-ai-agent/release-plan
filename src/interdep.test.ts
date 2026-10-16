@@ -62,11 +62,11 @@ describe('interdep', function () {
 
       expect(Array(...answer.keys())).toMatchInlineSnapshot(`
         [
-          "release-plan",
+          "@nullvoxpopuli/release-plan",
         ]
       `);
 
-      expect(answer.get('release-plan')).toMatchInlineSnapshot(
+      expect(answer.get('@nullvoxpopuli/release-plan')).toMatchInlineSnapshot(
         {
           pkg: expect.any(Object),
           version: expect.any(String),

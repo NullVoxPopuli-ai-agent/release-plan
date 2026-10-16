@@ -64,7 +64,7 @@ which is responsible for automating the process that you'd run through manually 
 ### Manual
 
 ```
-npm i --save-dev release-plan
+npm i --save-dev @nullvoxpopuli/release-plan
 ```
 
 To use `release-plan` you need to have a valid `GITHUB_AUTH` environment variable that has the `repo` permission. This allows `release-plan` to check what PRs have been merged since the last release and plan the release accordingly.
