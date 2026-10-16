@@ -443,7 +443,7 @@ describe('publish', function () {
           {
             "body": "new release",
             "name": "v1.0.0-release-plan",
-            "owner": "release-plan",
+            "owner": "NullVoxPopuli",
             "prerelease": false,
             "repo": "release-plan",
             "tag_name": "v1.0.0-release-plan",
@@ -479,7 +479,7 @@ describe('publish', function () {
           {
             "body": "new release",
             "name": "v1.0.0-release-plan",
-            "owner": "release-plan",
+            "owner": "NullVoxPopuli",
             "prerelease": true,
             "repo": "release-plan",
             "tag_name": "v1.0.0-release-plan",
