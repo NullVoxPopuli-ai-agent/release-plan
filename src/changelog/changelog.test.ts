@@ -11,6 +11,8 @@ vi.mock('./git.js', () => ({
   firstParentOrder: vi.fn(),
   changedPaths: vi.fn(),
   getRootPath: vi.fn(),
+  commitFor: vi.fn(),
+  commitsUpTo: vi.fn(),
 }));
 
 type MockResponse = {
@@ -79,6 +81,8 @@ const mocked = {
   firstParentOrder: vi.mocked(git.firstParentOrder),
   listCommits: vi.mocked(git.listCommits),
   changedPaths: vi.mocked(git.changedPaths),
+  commitFor: vi.mocked(git.commitFor),
+  commitsUpTo: vi.mocked(git.commitsUpTo),
 };
 
 const listOfCommits = [
@@ -602,6 +606,79 @@ describe('listChanges', () => {
 
       expect(prNumbers(await changelog.listChanges(allPackages))).not.toContain(
         8,
+      );
+    });
+  });
+
+  describe('forkedFrom', () => {
+    const FORK =
+      'https://api.github.com/repos/embroider-build/github-changelog';
+    const UPSTREAM = 'https://api.github.com/repos/upstream/repo';
+
+    /**
+     * a0000008 is the fork point, so PRs #1, #2 and #3 are upstream PRs.
+     * The fork has no PRs with those numbers.
+     */
+    function useForkFixtures() {
+      useFixtures(listOfPackagesForEachCommit);
+      for (const n of [1, 2, 3]) {
+        const issue = issuesCache[`${FORK}/issues/${n}`].body as object;
+        delete mockResponses[`${FORK}/issues/${n}`];
+        mockResponses[`${UPSTREAM}/issues/${n}`] = {
+          body: {
+            ...issue,
+            pull_request: {
+              html_url: `https://github.com/upstream/repo/pull/${n}`,
+            },
+          },
+        };
+      }
+      mocked.commitFor.mockImplementation((ref) => ref);
+      mocked.commitsUpTo.mockImplementation(
+        () =>
+          new Set(
+            listOfCommits.map((c) => c.sha).filter((sha) => sha <= 'a0000008'),
+          ),
+      );
+    }
+
+    it('looks up and links PRs from before the fork in the upstream repo', async () => {
+      useForkFixtures();
+      const changelog = new TestChangelog({
+        forkedFrom: { repo: 'upstream/repo', commit: 'a0000008' },
+        packages: fixturePackages,
+      });
+
+      const commits = await changelog.listChanges(allPackages);
+      const repoOf = Object.fromEntries(
+        commits.map((c) => [c.githubIssue!.number, c.repo]),
+      );
+      expect(repoOf).toEqual({
+        1: 'upstream/repo',
+        2: 'upstream/repo',
+        3: 'upstream/repo',
+        4: 'embroider-build/github-changelog',
+        5: 'embroider-build/github-changelog',
+        6: 'embroider-build/github-changelog',
+        7: 'embroider-build/github-changelog',
+        8: 'embroider-build/github-changelog',
+      });
+
+      const markdown = await changelog.renderMarkdown(commits);
+      expect(markdown).toContain('(https://github.com/upstream/repo/pull/1)');
+      expect(markdown).not.toContain('github-changelog/pull/1)');
+    });
+
+    it('throws when the fork commit is not in the clone', async () => {
+      useForkFixtures();
+      mocked.commitFor.mockImplementation(() => undefined);
+      const changelog = new TestChangelog({
+        forkedFrom: { repo: 'upstream/repo', commit: 'abc123' },
+        packages: fixturePackages,
+      });
+
+      await expect(changelog.listChanges(allPackages)).rejects.toThrow(
+        '"forkedFrom.commit" abc123 is not in this clone',
       );
     });
   });

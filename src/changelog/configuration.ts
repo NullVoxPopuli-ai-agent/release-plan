@@ -19,6 +19,8 @@ export interface Configuration {
   ignoreCommitters: string[];
   /** GitHub login to the login that gets the credit */
   renameCommitters: { [login: string]: string };
+  /** PR numbers in commits up to `commit` belong to `repo` */
+  forkedFrom?: { repo: string; commit: string };
   ignoreLabel: string;
   nextVersion: string | undefined;
   wildcardLabel?: string;
@@ -41,7 +43,7 @@ export function fromPath(
 ): Configuration {
   const config = fromPackageConfig(rootPath);
 
-  const { github } = config;
+  const { github, forkedFrom } = config;
   const nextVersion = options.nextVersion;
   let {
     repo,
@@ -102,6 +104,7 @@ export function fromPath(
     wildcardLabel,
     packages: options.packages ?? [],
     github,
+    forkedFrom,
   };
 }
 
@@ -116,6 +119,7 @@ const repoOptions = [
   'labels',
   'ignoreCommitters',
   'renameCommitters',
+  'forkedFrom',
   'ignoreLabel',
   'wildcardLabel',
 ] as const;

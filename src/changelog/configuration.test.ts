@@ -96,6 +96,20 @@ describe('Configuration', function () {
       });
     });
 
+    it("reads 'forkedFrom' from the 'release-plan' key", function () {
+      writeJson(path.join(tmpDir, 'package.json'), {
+        'release-plan': {
+          repo: 'foo/bar',
+          forkedFrom: { repo: 'up/stream', commit: 'abc123' },
+        },
+      });
+
+      expect(fromPath(tmpDir).forkedFrom).toEqual({
+        repo: 'up/stream',
+        commit: 'abc123',
+      });
+    });
+
     it("defaults 'renameCommitters' to an empty object", function () {
       writeJson(path.join(tmpDir, 'package.json'), {
         'release-plan': { repo: 'foo/bar' },
