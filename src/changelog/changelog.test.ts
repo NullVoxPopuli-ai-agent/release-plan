@@ -493,6 +493,12 @@ describe('listChanges', () => {
   describe('ignore config', () => {
     it('ignores PRs from bot users even if they were not the (merge) committer', async () => {
       useFixtures(listOfPackagesForEachCommit);
+      const url =
+        'https://api.github.com/repos/embroider-build/github-changelog/issues/8';
+      const issue = issuesCache[url].body as { labels: { name: string }[] };
+      mockResponses[url] = {
+        body: { ...issue, labels: [{ name: 'Status: In Progress' }] },
+      };
 
       const withBots = new TestChangelog({ packages: fixturePackages });
       const withoutBots = new TestChangelog({
@@ -504,6 +510,44 @@ describe('listChanges', () => {
       expect(
         prNumbers(await withoutBots.listChanges(allPackages)),
       ).not.toContain(8);
+    });
+
+    it('keeps PRs from ignored committers that have a configured label', async () => {
+      useFixtures(listOfPackagesForEachCommit);
+      const url =
+        'https://api.github.com/repos/embroider-build/github-changelog/issues/8';
+      const issue = issuesCache[url].body as { labels: { name: string }[] };
+      mockResponses[url] = {
+        body: { ...issue, labels: [{ name: 'Type: Bug' }] },
+      };
+
+      const changelog = new TestChangelog({
+        ignoreCommitters: ['bot-user'],
+        packages: fixturePackages,
+      });
+      const commits = await changelog.listChanges(allPackages);
+
+      expect(prNumbers(commits)).toContain(8);
+    });
+
+    it('drops PRs from ignored committers that only have the wildcard label', async () => {
+      useFixtures(listOfPackagesForEachCommit);
+      const url =
+        'https://api.github.com/repos/embroider-build/github-changelog/issues/8';
+      const issue = issuesCache[url].body as { labels: { name: string }[] };
+      mockResponses[url] = {
+        body: { ...issue, labels: [{ name: 'unlabeled' }] },
+      };
+
+      const changelog = new TestChangelog({
+        ignoreCommitters: ['bot-user'],
+        wildcardLabel: 'unlabeled',
+        labels: { ...defaultConfig.labels, unlabeled: ':present: Other' },
+        packages: fixturePackages,
+      });
+      const commits = await changelog.listChanges(allPackages);
+
+      expect(prNumbers(commits)).not.toContain(8);
     });
 
     it('ignores PRs with the ignore label', async () => {

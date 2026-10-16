@@ -59,9 +59,10 @@ The supported options are:
   value. [Read more about this option](#wildcardlabel).
 
 - `ignoreCommitters`: List of committers to ignore (exact or partial match).
-  The default is an empty list, so PRs from bots such as `dependabot[bot]`
-  count like other PRs. A dependency update in a published package then
-  causes a release of that package.
+  A PR from one of them is left out, unless it has one of the `labels`.
+  The `wildcardLabel` does not count. The default is an empty list, so PRs
+  from bots such as `dependabot[bot]` count like other PRs. A dependency
+  update in a published package then causes a release of that package.
 
 Older versions read these options from a `changelog` key. Release Plan still
 reads that key, but it prints a warning. If both keys set an option, the
