@@ -1,6 +1,3 @@
-import path from 'node:path';
-import fetch from 'make-fetch-happen';
-
 import ConfigurationError from './configuration-error.js';
 
 interface GitHubContributorBase {
@@ -33,19 +30,14 @@ export interface GitHubIssueResponse {
 
 export interface Options {
   repo: string;
-  rootPath: string;
-  cacheDir?: string;
   github?: string;
 }
 
 export default class GithubAPI {
-  private cacheDir: string | undefined;
   private auth: string;
   private github: string;
 
   constructor(config: Options) {
-    this.cacheDir =
-      config.cacheDir && path.join(config.rootPath, config.cacheDir, 'github');
     this.github = config.github || process.env.GITHUB_DOMAIN || 'github.com';
     this.auth = this.getAuthToken();
     if (!this.auth) {
@@ -82,7 +74,6 @@ export default class GithubAPI {
 
   private async _fetch(url: string): Promise<any> {
     const res = await fetch(url, {
-      cachePath: this.cacheDir,
       headers: {
         Authorization: `token ${this.auth}`,
       },

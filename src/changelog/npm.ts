@@ -1,5 +1,3 @@
-import fetch from 'make-fetch-happen';
-
 export type NpmVersionInfo =
   | { published: false }
   | { published: true; gitHead: string | undefined }

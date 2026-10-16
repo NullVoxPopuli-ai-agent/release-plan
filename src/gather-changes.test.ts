@@ -7,17 +7,15 @@ import { planVersionBumps } from './plan.js';
 type Response = { status: number; body: unknown };
 let responses: Record<string, Response> = {};
 
-vi.mock('make-fetch-happen', () => ({
-  default: async (url: string) => {
-    const response = responses[url] ?? { status: 404, body: {} };
-    return {
-      status: response.status,
-      statusText: response.status === 200 ? 'OK' : 'Not Found',
-      ok: response.status === 200,
-      json: () => Promise.resolve(response.body),
-    };
-  },
-}));
+vi.stubGlobal('fetch', async (url: string) => {
+  const response = responses[url] ?? { status: 404, body: {} };
+  return {
+    status: response.status,
+    statusText: response.status === 200 ? 'OK' : 'Not Found',
+    ok: response.status === 200,
+    json: () => Promise.resolve(response.body),
+  };
+});
 
 const user = {
   login: 'luke',

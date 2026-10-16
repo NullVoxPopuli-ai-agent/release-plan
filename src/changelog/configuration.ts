@@ -18,7 +18,6 @@ export interface Configuration {
   labels: { [key: string]: string };
   ignoreCommitters: string[];
   ignoreLabel: string;
-  cacheDir?: string;
   nextVersion: string | undefined;
   wildcardLabel?: string;
   packages: PackageLocation[];
@@ -40,7 +39,7 @@ export function fromPath(
 ): Configuration {
   const config = fromPackageConfig(rootPath);
 
-  const { cacheDir, github } = config;
+  const { github } = config;
   const nextVersion = options.nextVersion;
   let { repo, labels, ignoreCommitters, ignoreLabel, wildcardLabel } = config;
 
@@ -86,7 +85,6 @@ export function fromPath(
     labels,
     ignoreCommitters,
     ignoreLabel,
-    cacheDir,
     wildcardLabel,
     packages: options.packages ?? [],
     github,
@@ -105,7 +103,6 @@ const repoOptions = [
   'ignoreCommitters',
   'ignoreLabel',
   'wildcardLabel',
-  'cacheDir',
 ] as const;
 
 function fromPackageConfig(rootPath: string): Partial<Configuration> {
@@ -118,6 +115,15 @@ function fromPackageConfig(rootPath: string): Partial<Configuration> {
   if (pkg.changelog) {
     console.warn(
       'The "changelog" key in package.json is deprecated. Move its options into the "release-plan" key.',
+    );
+  }
+
+  if (
+    pkg.changelog?.cacheDir !== undefined ||
+    pkg['release-plan']?.cacheDir !== undefined
+  ) {
+    console.warn(
+      'The "cacheDir" option does nothing and can be removed from package.json.',
     );
   }
 

@@ -22,20 +22,18 @@ type MockResponse = {
 
 let mockResponses: Record<string, MockResponse> = {};
 
-vi.mock('make-fetch-happen', () => ({
-  default: async (url: string) => {
-    const response = mockResponses[url];
-    if (!response) {
-      throw new Error(`Unknown URL: ${url}`);
-    }
-    return {
-      status: response.status ?? 200,
-      statusText: response.statusText ?? 'OK',
-      ok: response.ok ?? true,
-      json: () => Promise.resolve(response.body),
-    };
-  },
-}));
+vi.stubGlobal('fetch', async (url: string) => {
+  const response = mockResponses[url];
+  if (!response) {
+    throw new Error(`Unknown URL: ${url}`);
+  }
+  return {
+    status: response.status ?? 200,
+    statusText: response.statusText ?? 'OK',
+    ok: response.ok ?? true,
+    json: () => Promise.resolve(response.body),
+  };
+});
 
 const ROOT = '/repo';
 
