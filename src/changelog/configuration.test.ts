@@ -83,6 +83,21 @@ describe('Configuration', function () {
       warn.mockRestore();
     });
 
+    it("warns that 'cacheDir' does nothing", function () {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      writeJson(path.join(tmpDir, 'package.json'), {
+        'release-plan': { repo: 'foo/bar', cacheDir: '.changelog' },
+      });
+
+      const result = fromPath(tmpDir);
+      expect(result.repo).toEqual('foo/bar');
+      expect(result).not.toHaveProperty('cacheDir');
+      expect(warn).toHaveBeenCalledWith(
+        'The "cacheDir" option does nothing and can be removed from package.json.',
+      );
+      warn.mockRestore();
+    });
+
     it("does not read 'lerna.json'", function () {
       writeJson(path.join(tmpDir, 'lerna.json'), {
         changelog: { repo: 'foo/lerna' },

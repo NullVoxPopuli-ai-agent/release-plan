@@ -63,9 +63,6 @@ The supported options are:
   count like other PRs. A dependency update in a published package then
   causes a release of that package.
 
-- `cacheDir`: Path to a GitHub API response cache to avoid throttling
-  (e.g. `.changelog`)
-
 Older versions read these options from a `changelog` key. Release Plan still
 reads that key, but it prints a warning. If both keys set an option, the
 `release-plan` key wins.
