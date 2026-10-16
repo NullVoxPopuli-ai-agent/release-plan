@@ -7,8 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - master
+      - next
     paths:
       - ".release-plan.json"
 
@@ -35,6 +34,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Publish to NPM
-        run: NPM_CONFIG_PROVENANCE=true node ./dist/cli.js publish
+        run: NPM_CONFIG_PROVENANCE=true node ./dist/cli.js publish --publish-branch=next
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
