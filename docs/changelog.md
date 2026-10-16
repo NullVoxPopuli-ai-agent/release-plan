@@ -29,12 +29,14 @@ A pull request needs one of these labels to appear:
 
 ## Configuration
 
-Add a `changelog` key to the `package.json` file of your project:
+Add the options to the `release-plan` key of the root `package.json` file of
+your project. These options apply to the whole repo, so Release Plan reads them
+from the root `package.json` only.
 
 ```json5
 {
   // ...
-  "changelog": {
+  "release-plan": {
     "labels": {
       "feature": "New Feature",
       "bug": "Bug Fix"
@@ -50,9 +52,6 @@ The supported options are:
 
 - `github`: the github domain, default: github.com
 
-- `nextVersion`: Title for unreleased commits
-  (e.g. `Unreleased`)
-
 - `labels`: GitHub PR labels mapped to changelog section headers
 
 - `wildcardLabel`: A label to identify commits that don't have a GitHub PR label
@@ -67,6 +66,10 @@ The supported options are:
 - `cacheDir`: Path to a GitHub API response cache to avoid throttling
   (e.g. `.changelog`)
 
+Older versions read these options from a `changelog` key. Release Plan still
+reads that key, but it prints a warning. If both keys set an option, the
+`release-plan` key wins.
+
 ### `wildcardLabel`
 
 For some projects, it may be beneficial to list PRs in the changelog that don't
@@ -75,7 +78,7 @@ have a matching label defined in the configuration `labels`. Listing these PRs a
 ```json5
 {
   // ...
-  "changelog": {
+  "release-plan": {
     "wildcardLabel": "unlabeled"
   }
 }
@@ -95,7 +98,7 @@ You can overwrite the default heading by including the `wildcardLabel` value in 
 ```json5
 {
   // ...
-  "changelog": {
+  "release-plan": {
     "labels": {
       "feature": "New Feature",
       "bug": "Bug Fix",

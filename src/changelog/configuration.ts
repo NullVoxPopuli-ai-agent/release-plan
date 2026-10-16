@@ -38,17 +38,11 @@ export function fromPath(
   rootPath: string,
   options: ConfigLoaderOptions = {},
 ): Configuration {
-  const config: Partial<Configuration> = fromPackageConfig(rootPath) || {};
+  const config = fromPackageConfig(rootPath);
 
   const { cacheDir, github } = config;
-  let {
-    repo,
-    nextVersion,
-    labels,
-    ignoreCommitters,
-    ignoreLabel,
-    wildcardLabel,
-  } = config;
+  const nextVersion = options.nextVersion;
+  let { repo, labels, ignoreCommitters, ignoreLabel, wildcardLabel } = config;
 
   if (!repo) {
     repo = findRepo(rootPath);
@@ -57,10 +51,6 @@ export function fromPath(
         'Could not infer "repo" from the "package.json" file.',
       );
     }
-  }
-
-  if (options.nextVersion) {
-    nextVersion = options.nextVersion;
   }
 
   if (!labels) {
@@ -103,13 +93,43 @@ export function fromPath(
   };
 }
 
-function fromPackageConfig(
-  rootPath: string,
-): Partial<Configuration> | undefined {
+/**
+ * Options for the whole repo.
+ * The `release-plan` key of each package also holds options for that
+ * package, so only these names are read from the root package.json.
+ */
+const repoOptions = [
+  'repo',
+  'github',
+  'labels',
+  'ignoreCommitters',
+  'ignoreLabel',
+  'wildcardLabel',
+  'cacheDir',
+] as const;
+
+function fromPackageConfig(rootPath: string): Partial<Configuration> {
   const pkgPath = path.join(rootPath, 'package.json');
-  if (fs.existsSync(pkgPath)) {
-    return JSON.parse(fs.readFileSync(pkgPath, 'utf8')).changelog;
+  if (!fs.existsSync(pkgPath)) {
+    return {};
   }
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+
+  if (pkg.changelog) {
+    console.warn(
+      'The "changelog" key in package.json is deprecated. Move its options into the "release-plan" key.',
+    );
+  }
+
+  const config: Partial<Configuration> = {};
+  for (const source of [pkg.changelog, pkg['release-plan']]) {
+    for (const name of repoOptions) {
+      if (source?.[name] !== undefined) {
+        config[name] = source[name];
+      }
+    }
+  }
+  return config;
 }
 
 function findRepo(rootPath: string): string | undefined {
