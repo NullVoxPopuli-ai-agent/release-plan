@@ -85,13 +85,14 @@ export default class Changelog {
 
     commits = commits.filter((c) => {
       const login = c.githubIssue?.user.login;
-      return (
-        login &&
-        !this.ignoreCommitter(login) &&
-        !c
-          .githubIssue!.labels.map((l) => l.name)
-          .includes(this.config.ignoreLabel)
-      );
+      if (!login) {
+        return false;
+      }
+      const labels = c.githubIssue!.labels.map((l) => l.name);
+      if (labels.includes(this.config.ignoreLabel)) {
+        return false;
+      }
+      return !this.ignoreCommitter(login) || this.hasConfiguredLabel(labels);
     });
 
     this.fillInCategories(commits);
@@ -154,6 +155,17 @@ export default class Changelog {
     }
 
     return Object.keys(committers).map((k) => committers[k]);
+  }
+
+  /**
+   * A label from `labels`, so a person chose the impact of the PR.
+   * The wildcard label is only a fallback, so it does not count.
+   */
+  private hasConfiguredLabel(labels: string[]): boolean {
+    const configured = Object.keys(this.config.labels)
+      .filter((label) => label !== this.config.wildcardLabel)
+      .map((label) => label.toLowerCase());
+    return labels.some((label) => configured.includes(label.toLowerCase()));
   }
 
   private ignoreCommitter(login: string): boolean {

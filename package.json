@@ -76,6 +76,10 @@
     "access": "public"
   },
   "release-plan": {
+    "ignoreCommitters": [
+      "dependabot[bot]",
+      "renovate[bot]"
+    ],
     "semverIncrementAs": {
       "major": "minor"
     }
