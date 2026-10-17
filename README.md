@@ -15,7 +15,7 @@ This is a fork of [release-plan](https://github.com/release-plan/release-plan). 
 | Changelog config         | `changelog` key in `package.json`, or `lerna.json` | `release-plan` key in the root `package.json`                               |
 | Bot PRs, like dependabot | Ignored                                            | Count like other PRs, unless `ignoreCommitters` lists them                  |
 | `ignoreCommitters`       | Leaves the PR out, even with a label               | Leaves the PR out, unless it has one of the `labels`                        |
-| PR credit                | The PR author                                      | `renameCommitters` can give one login's PRs to another login                |
+| PR author                | The GitHub login that opened the PR                | `renameCommitters` can rename an author, for example a bot to its owner     |
 | Forks                    | PR numbers are looked up in `repo`                 | `forkedFrom` looks up PRs from before the fork in the upstream repo         |
 | GitHub API cache         | `cacheDir` option                                  | No cache. `cacheDir` prints a warning                                       |
 | Install                  | `release-plan`                                     | `@nullvoxpopuli/release-plan` (the command is still `release-plan`)         |
