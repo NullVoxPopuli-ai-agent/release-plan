@@ -52,7 +52,23 @@ The supported options are:
 
 - `github`: the github domain, default: github.com
 
-- `labels`: GitHub PR labels mapped to changelog section headers
+- `labels`: GitHub PR labels mapped to changelog section headers. The header
+  sets the impact of the PR: `:boom: Breaking Change` is major,
+  `:rocket: Enhancement` is minor, and `:bug: Bug Fix`, `:memo: Documentation`
+  and `:house: Internal` are patch. Several labels can share one header, and
+  the changelog shows that section once. If you set `labels`, it replaces the
+  default list, so include every label that you use. For example:
+
+  ```json
+  "labels": {
+    "breaking": ":boom: Breaking Change",
+    "enhancement": ":rocket: Enhancement",
+    "bug": ":bug: Bug Fix",
+    "bugfix": ":bug: Bug Fix",
+    "documentation": ":memo: Documentation",
+    "internal": ":house: Internal"
+  }
+  ```
 
 - `wildcardLabel`: A label to identify commits that don't have a GitHub PR label
   which matches a value in `labels`. (e.g. `unlabeled`) By default, this has no

@@ -50,11 +50,7 @@ export async function gatherChanges(): Promise<GatheredChanges> {
 
   return {
     markdown: await changelog.renderMarkdown(commits),
-    changes: toParsedChangelog(
-      commits,
-      Object.values(config.labels),
-      changelog,
-    ),
+    changes: toParsedChangelog(commits, changelog.headings(), changelog),
   };
 }
 
