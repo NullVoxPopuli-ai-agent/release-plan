@@ -2,6 +2,23 @@
 
 ## Release (2026-10-17)
 
+* @nullvoxpopuli/release-plan 0.22.0 (minor)
+
+#### :rocket: Enhancement
+* `@nullvoxpopuli/release-plan`
+  * [#16](https://github.com/NullVoxPopuli/release-plan/pull/16) Read repo options from a release-plan config file ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#15](https://github.com/NullVoxPopuli/release-plan/pull/15) Render one section for labels that share a heading ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#13](https://github.com/NullVoxPopuli/release-plan/pull/13) Add a files option to choose which files of a package count ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :memo: Documentation
+* `@nullvoxpopuli/release-plan`
+  * [#12](https://github.com/NullVoxPopuli/release-plan/pull/12) Describe renameCommitters as renaming a PR author ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### Committers: 1
+- [@NullVoxPopuli](https://github.com/NullVoxPopuli)
+
+## Release (2026-10-17)
+
 * @nullvoxpopuli/release-plan 0.21.0 (major)
 
 #### :boom: Breaking Change

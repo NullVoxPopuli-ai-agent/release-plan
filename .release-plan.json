@@ -1,15 +1,11 @@
 {
   "solution": {
     "@nullvoxpopuli/release-plan": {
-      "impact": "major",
-      "oldVersion": "0.20.1",
-      "newVersion": "0.21.0",
+      "impact": "minor",
+      "oldVersion": "0.21.0",
+      "newVersion": "0.22.0",
       "tagName": "latest",
       "constraints": [
-        {
-          "impact": "major",
-          "reason": "Appears in changelog section :boom: Breaking Change"
-        },
         {
           "impact": "minor",
           "reason": "Appears in changelog section :rocket: Enhancement"
@@ -17,14 +13,10 @@
         {
           "impact": "patch",
           "reason": "Appears in changelog section :memo: Documentation"
-        },
-        {
-          "impact": "patch",
-          "reason": "Appears in changelog section :house: Internal"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-10-17)\n\n* @nullvoxpopuli/release-plan 0.21.0 (major)\n\n#### :boom: Breaking Change\n* `@nullvoxpopuli/release-plan`\n  * [#2](https://github.com/NullVoxPopuli/release-plan/pull/2) Rename the package to @nullvoxpopuli/release-plan ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n\n#### :rocket: Enhancement\n* `@nullvoxpopuli/release-plan`\n  * [#10](https://github.com/NullVoxPopuli/release-plan/pull/10) Add a forkedFrom option for PR numbers from the upstream repo ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#8](https://github.com/NullVoxPopuli/release-plan/pull/8) Add a renameCommitters option ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#7](https://github.com/NullVoxPopuli/release-plan/pull/7) Leave out dependabot and renovate PRs unless they have an impact label ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#3](https://github.com/NullVoxPopuli/release-plan/pull/3) Use the built-in fetch instead of make-fetch-happen ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#1](https://github.com/NullVoxPopuli/release-plan/pull/1) Detect changes per package from git history ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n\n#### :memo: Documentation\n* `@nullvoxpopuli/release-plan`\n  * [#11](https://github.com/NullVoxPopuli/release-plan/pull/11) List the new changelog options in the fork table ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#9](https://github.com/NullVoxPopuli/release-plan/pull/9) Point repository to NullVoxPopuli/release-plan ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#4](https://github.com/NullVoxPopuli/release-plan/pull/4) Explain why this fork exists in the README ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n\n#### :house: Internal\n* `@nullvoxpopuli/release-plan`\n  * [#5](https://github.com/NullVoxPopuli/release-plan/pull/5) Run the release workflows on next ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n\n#### Committers: 1\n- [@NullVoxPopuli](https://github.com/NullVoxPopuli)\n"
+  "description": "## Release (2026-10-17)\n\n* @nullvoxpopuli/release-plan 0.22.0 (minor)\n\n#### :rocket: Enhancement\n* `@nullvoxpopuli/release-plan`\n  * [#16](https://github.com/NullVoxPopuli/release-plan/pull/16) Read repo options from a release-plan config file ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#15](https://github.com/NullVoxPopuli/release-plan/pull/15) Render one section for labels that share a heading ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n  * [#13](https://github.com/NullVoxPopuli/release-plan/pull/13) Add a files option to choose which files of a package count ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n\n#### :memo: Documentation\n* `@nullvoxpopuli/release-plan`\n  * [#12](https://github.com/NullVoxPopuli/release-plan/pull/12) Describe renameCommitters as renaming a PR author ([@NullVoxPopuli](https://github.com/NullVoxPopuli))\n\n#### Committers: 1\n- [@NullVoxPopuli](https://github.com/NullVoxPopuli)\n"
 }
