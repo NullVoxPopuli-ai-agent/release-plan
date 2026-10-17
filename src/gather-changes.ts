@@ -41,7 +41,7 @@ export async function gatherChanges(): Promise<GatheredChanges> {
     { concurrency: 5 },
   );
 
-  const config = loadChangelogConfig({
+  const config = await loadChangelogConfig({
     packages: ranges.map(({ name, path }) => ({ name, path })),
     nextVersion: 'Release',
   });
