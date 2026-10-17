@@ -29,21 +29,33 @@ A pull request needs one of these labels to appear:
 
 ## Configuration
 
-Add the options to the `release-plan` key of the root `package.json` file of
-your project. These options apply to the whole repo, so Release Plan reads them
-from the root `package.json` only.
+These options apply to the whole repo. Put them in one of these places in the
+repo root:
 
-```json5
-{
-  // ...
-  "release-plan": {
-    "labels": {
-      "feature": "New Feature",
-      "bug": "Bug Fix"
-    }
-  }
-}
+- A config file: `release-plan.config.js`, `release-plan.config.mjs`,
+  `release-plan.config.cjs`, `release-plan.config.json`, `.release-planrc`, or
+  `.release-planrc.json`. A JS file must have a default export.
+- The `release-plan` key of the root `package.json`.
+
+```js
+// release-plan.config.mjs
+export default {
+  labels: {
+    breaking: ':boom: Breaking Change',
+    enhancement: ':rocket: Enhancement',
+    bug: ':bug: Bug Fix',
+    // some PRs use this label for bug fixes
+    bugfix: ':bug: Bug Fix',
+    documentation: ':memo: Documentation',
+    internal: ':house: Internal',
+  },
+};
 ```
+
+You can use both places, but not for the same option. If both set an option,
+Release Plan stops with an error. Options for one package, such as `ignore` and
+`files`, go in the `release-plan` key of the `package.json` of that package. So
+a config file can hold only the options below.
 
 The supported options are:
 
