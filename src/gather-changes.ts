@@ -4,6 +4,7 @@ import pMap from 'p-map';
 import { sectionKind } from './change-parser.js';
 import type { ParsedChangelog, Section } from './change-parser.js';
 import Changelog from './changelog/changelog.js';
+import ConfigurationError from './changelog/configuration-error.js';
 import type { PackageRange } from './changelog/changelog.js';
 import { load as loadChangelogConfig } from './changelog/configuration.js';
 import type { CommitInfo } from './changelog/interfaces.js';
@@ -34,6 +35,7 @@ export async function gatherChanges(): Promise<GatheredChanges> {
         name,
         path: resolve(dirname(entry.pkgJSONPath)),
         from: base.ref,
+        files: packageFiles(name, entry.pkg['release-plan']?.files),
       };
     },
     { concurrency: 5 },
@@ -54,6 +56,18 @@ export async function gatherChanges(): Promise<GatheredChanges> {
       changelog,
     ),
   };
+}
+
+function packageFiles(name: string, files: unknown): string[] | undefined {
+  if (files === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(files) || files.some((f) => typeof f !== 'string')) {
+    throw new ConfigurationError(
+      `"release-plan.files" in the package.json of ${name} must be a list of globs.`,
+    );
+  }
+  return files;
 }
 
 function toParsedChangelog(

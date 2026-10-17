@@ -1,4 +1,4 @@
-import { parseLogMessage } from './git.js';
+import { packagePathspecs, parseLogMessage } from './git.js';
 import { describe, it, expect } from 'vitest';
 
 const messages = [
@@ -31,5 +31,28 @@ describe('parseLogMessage', function () {
     it('should parse message ' + i, function () {
       expect(parseLogMessage(message)).toMatchSnapshot();
     });
+  });
+});
+
+describe('packagePathspecs', function () {
+  it('uses the whole package folder without `files`', function () {
+    expect(packagePathspecs('/repo/pkg')).toEqual(['/repo/pkg']);
+  });
+
+  it('keeps the whole folder when `files` only excludes', function () {
+    expect(packagePathspecs('/repo/pkg', ['!tests'])).toEqual([
+      '/repo/pkg',
+      ':(glob,exclude)/repo/pkg/tests',
+    ]);
+  });
+
+  it('adds package.json to the globs that `files` lists', function () {
+    expect(packagePathspecs('/repo/pkg', ['src', '!src/**/*.test.ts'])).toEqual(
+      [
+        ':(glob)/repo/pkg/src',
+        '/repo/pkg/package.json',
+        ':(glob,exclude)/repo/pkg/src/**/*.test.ts',
+      ],
+    );
   });
 });

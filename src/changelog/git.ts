@@ -1,4 +1,5 @@
 import { execa, execaSync } from 'execa';
+import { join } from 'node:path';
 
 export function getRootPath() {
   const cwd = process.cwd();
@@ -106,6 +107,40 @@ export function parseLogMessage(commit: string): CommitListItem | null {
     summary: parts[3],
     date: parts[4],
   };
+}
+
+/**
+ * The git pathspecs for the files of a package that count as changes.
+ *
+ * `files` holds globs relative to the package folder.
+ * A glob that starts with `!` leaves files out.
+ * If there is no other glob, the whole folder counts.
+ *
+ * An exclude pathspec alone matches the whole repo,
+ * so the result always has an include pathspec.
+ */
+export function packagePathspecs(dir: string, files: string[] = []): string[] {
+  const include: string[] = [];
+  const exclude: string[] = [];
+
+  for (const file of files) {
+    if (file.startsWith('!')) {
+      exclude.push(`:(glob,exclude)${join(dir, file.slice(1))}`);
+    } else {
+      include.push(`:(glob)${join(dir, file)}`);
+    }
+  }
+
+  if (include.length === 0) {
+    include.push(dir);
+  } else {
+    /**
+     * A dependency change in package.json must still cause a release.
+     */
+    include.push(join(dir, 'package.json'));
+  }
+
+  return include.concat(exclude);
 }
 
 /**

@@ -170,6 +170,72 @@ describe('gatherChanges', function () {
     ).not.toMatchObject({ summaryText: expect.stringContaining('[#7]') });
   });
 
+  /**
+   * The package.json of b after its release, with a release-plan config.
+   *
+   * "version" stays the last key, so its line does not change.
+   * A change to that line makes the commit the release base of b.
+   */
+  function releasedB(config: object) {
+    return { name: 'b', 'release-plan': config, version: '1.1.0' };
+  }
+
+  it("leaves out files that a package's `files` excludes", async () => {
+    await history();
+    await repo.commit('Leave out the tests of b (#9)', {
+      'packages/b/package.json': releasedB({
+        files: ['!tests', '!**/*.test.js'],
+      }),
+    });
+    await repo.commit('test b (#10)', {
+      'packages/b/tests/index.js': '10',
+      'packages/b/src/index.test.js': '10',
+    });
+    await repo.commit('fix b (#11)', { 'packages/b/src/index.js': '11' });
+    pr(9, 'internal');
+    pr(10, 'internal');
+    pr(11, 'bug');
+
+    const { markdown, changes } = await gatherChanges();
+
+    expect(markdown).not.toContain('[#10]');
+    expect(markdown).toContain('[#11]');
+    expect(changes.sections).toContainEqual({
+      heading: ':bug: Bug Fix',
+      impact: 'patch',
+      packages: ['b', 'a'],
+    });
+  });
+
+  it("counts only the files that a package's `files` lists, and its package.json", async () => {
+    await history();
+    await repo.commit('Only src counts for b (#9)', {
+      'packages/b/package.json': releasedB({ files: ['src'] }),
+    });
+    await repo.commit('docs for b (#10)', { 'packages/b/README.md': '10' });
+    await repo.commit('fix b (#11)', { 'packages/b/src/index.js': '11' });
+    pr(9, 'internal');
+    pr(10, 'documentation');
+    pr(11, 'bug');
+
+    const { markdown } = await gatherChanges();
+
+    expect(markdown).toContain('[#9]');
+    expect(markdown).not.toContain('[#10]');
+    expect(markdown).toContain('[#11]');
+  });
+
+  it('throws when `files` is not a list of globs', async () => {
+    await history();
+    await repo.commit('bad config (#9)', {
+      'packages/b/package.json': releasedB({ files: 'src' }),
+    });
+
+    await expect(gatherChanges()).rejects.toThrow(
+      '"release-plan.files" in the package.json of b must be a list of globs.',
+    );
+  });
+
   it('finds PRs that landed as merge commits', async () => {
     await history();
     await repo.git('checkout', '--quiet', '-b', 'feature');
