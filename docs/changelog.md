@@ -69,6 +69,13 @@ The supported options are:
   shows the new login. The match ignores case. `ignoreCommitters` sees the
   new login. For example, `{ "NullVoxPopuli-ai-agent": "NullVoxPopuli" }`.
 
+- `forkedFrom`: For a fork, the repo it came from and the last commit from
+  that repo, for example
+  `{ "repo": "release-plan/release-plan", "commit": "463c448..." }`.
+  PR numbers in that commit and the commits before it belong to the other
+  repo, so release-plan looks them up and links them there. The commit must
+  be in the clone, so CI must fetch the full history.
+
 Older versions read these options from a `changelog` key. Release Plan still
 reads that key, but it prints a warning. If both keys set an option, the
 `release-plan` key wins.

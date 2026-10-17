@@ -52,7 +52,7 @@ const COMMIT_WITH_PHAB_ISSUE_REF = {
 
 function renderer(options: object = {}): MarkdownRenderer {
   return new MarkdownRenderer({
-    baseIssueUrl: 'http://foo.bar/',
+    baseIssueUrl: () => 'http://foo.bar/',
     categories: [],
     unreleasedName: 'Unreleased',
     ...options,

@@ -80,6 +80,10 @@
       "dependabot[bot]",
       "renovate[bot]"
     ],
+    "forkedFrom": {
+      "repo": "release-plan/release-plan",
+      "commit": "463c4489a5698ce528e0c9d98886fb73aea6d1a5"
+    },
     "renameCommitters": {
       "NullVoxPopuli-ai-agent": "NullVoxPopuli"
     },

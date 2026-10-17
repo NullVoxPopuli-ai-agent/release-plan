@@ -2,6 +2,7 @@ import pMap from 'p-map';
 import { resolve, sep } from 'node:path';
 
 import type { Configuration } from './configuration.js';
+import ConfigurationError from './configuration-error.js';
 import findPullRequestId from './find-pull-request-id.js';
 import * as Git from './git.js';
 import GithubAPI from './github-api.js';
@@ -35,7 +36,7 @@ export default class Changelog {
       categories: Object.keys(this.config.labels).map(
         (key) => this.config.labels[key],
       ),
-      baseIssueUrl: this.github.getBaseIssueUrl(this.config.repo),
+      baseIssueUrl: (repo) => this.github.getBaseIssueUrl(repo),
       unreleasedName: this.config.nextVersion || 'Release',
     });
   }
@@ -203,6 +204,7 @@ export default class Changelog {
   }
 
   private toCommitInfos(commits: Git.CommitListItem[]): CommitInfo[] {
+    const upstream = this.upstreamCommits();
     return commits.map((commit) => {
       const { sha, summary: message, date } = commit;
 
@@ -210,6 +212,9 @@ export default class Changelog {
 
       return {
         commitSHA: sha,
+        repo: upstream?.has(sha)
+          ? this.config.forkedFrom!.repo
+          : this.config.repo,
         message,
         issueNumber,
         date,
@@ -223,7 +228,7 @@ export default class Changelog {
       async (commitInfo: CommitInfo) => {
         if (commitInfo.issueNumber) {
           const issue = await this.github.getIssueData(
-            this.config.repo,
+            commitInfo.repo,
             commitInfo.issueNumber,
           );
           commitInfo.githubIssue = this.renameCommitter(issue);
@@ -231,6 +236,23 @@ export default class Changelog {
       },
       { concurrency: 5 },
     );
+  }
+
+  /**
+   * The commits that came from the repo this one forked from.
+   * Their PR numbers belong to that repo.
+   */
+  private upstreamCommits(): Set<string> | undefined {
+    const forkedFrom = this.config.forkedFrom;
+    if (!forkedFrom) {
+      return;
+    }
+    if (!Git.commitFor(forkedFrom.commit)) {
+      throw new ConfigurationError(
+        `"forkedFrom.commit" ${forkedFrom.commit} is not in this clone. Fetch the full history.`,
+      );
+    }
+    return Git.commitsUpTo(forkedFrom.commit);
   }
 
   protected getToday() {

@@ -30,6 +30,14 @@ export function commitFor(ref: string): string | undefined {
   return result.exitCode === 0 ? result.stdout : undefined;
 }
 
+/**
+ * Every commit that `ref` can reach, including `ref` itself.
+ */
+export function commitsUpTo(ref: string): Set<string> {
+  const shas = execaSync('git', ['rev-list', ref]).stdout.split('\n');
+  return new Set(shas.filter(Boolean));
+}
+
 export function isAncestor(ref: string, of: string = 'HEAD'): boolean {
   return (
     execaSync('git', ['merge-base', '--is-ancestor', ref, of], {

@@ -15,7 +15,7 @@ interface CategoryInfo {
 
 interface Options {
   categories: string[];
-  baseIssueUrl: string;
+  baseIssueUrl: (repo: string) => string;
   unreleasedName: string;
 }
 
@@ -117,7 +117,7 @@ export default class MarkdownRenderer {
       if (issue.title && issue.title.match(COMMIT_FIX_REGEX)) {
         issue.title = issue.title.replace(
           COMMIT_FIX_REGEX,
-          `Closes [#$3](${this.options.baseIssueUrl}$3)`,
+          `Closes [#$3](${this.options.baseIssueUrl(commit.repo)}$3)`,
         );
       }
 
