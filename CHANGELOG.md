@@ -1,5 +1,34 @@
 # release-plan Changelog
 
+## Release (2026-10-17)
+
+* @nullvoxpopuli/release-plan 0.21.0 (major)
+
+#### :boom: Breaking Change
+* `@nullvoxpopuli/release-plan`
+  * [#2](https://github.com/NullVoxPopuli/release-plan/pull/2) Rename the package to @nullvoxpopuli/release-plan ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :rocket: Enhancement
+* `@nullvoxpopuli/release-plan`
+  * [#10](https://github.com/NullVoxPopuli/release-plan/pull/10) Add a forkedFrom option for PR numbers from the upstream repo ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#8](https://github.com/NullVoxPopuli/release-plan/pull/8) Add a renameCommitters option ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#7](https://github.com/NullVoxPopuli/release-plan/pull/7) Leave out dependabot and renovate PRs unless they have an impact label ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#3](https://github.com/NullVoxPopuli/release-plan/pull/3) Use the built-in fetch instead of make-fetch-happen ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#1](https://github.com/NullVoxPopuli/release-plan/pull/1) Detect changes per package from git history ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :memo: Documentation
+* `@nullvoxpopuli/release-plan`
+  * [#11](https://github.com/NullVoxPopuli/release-plan/pull/11) List the new changelog options in the fork table ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#9](https://github.com/NullVoxPopuli/release-plan/pull/9) Point repository to NullVoxPopuli/release-plan ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+  * [#4](https://github.com/NullVoxPopuli/release-plan/pull/4) Explain why this fork exists in the README ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :house: Internal
+* `@nullvoxpopuli/release-plan`
+  * [#5](https://github.com/NullVoxPopuli/release-plan/pull/5) Run the release workflows on next ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### Committers: 1
+- [@NullVoxPopuli](https://github.com/NullVoxPopuli)
+
 ## Release (2026-09-24)
 
 * release-plan 0.20.1 (patch)
