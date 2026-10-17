@@ -6,7 +6,8 @@ import type { PackageRange } from './changelog.js';
 import type { CommitInfo } from './interfaces.js';
 import type { Configuration } from './configuration.js';
 
-vi.mock('./git.js', () => ({
+vi.mock('./git.js', async (importOriginal) => ({
+  packagePathspecs: (await importOriginal<typeof git>()).packagePathspecs,
   listCommits: vi.fn(),
   firstParentOrder: vi.fn(),
   changedPaths: vi.fn(),

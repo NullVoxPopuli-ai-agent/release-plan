@@ -16,6 +16,8 @@ export interface PackageRange {
   path: string;
   /** the last release of this package, undefined when it was never released */
   from: string | undefined;
+  /** the `files` globs from the release-plan config of the package */
+  files?: string[];
 }
 
 export default class Changelog {
@@ -56,7 +58,11 @@ export default class Changelog {
     const candidates = new Map<string, Set<string>>();
 
     for (const range of ranges) {
-      for (const item of Git.listCommits(range.from, 'HEAD', [range.path])) {
+      for (const item of Git.listCommits(
+        range.from,
+        'HEAD',
+        Git.packagePathspecs(range.path, range.files),
+      )) {
         items.set(item.sha, item);
         let names = candidates.get(item.sha);
         if (!names) {

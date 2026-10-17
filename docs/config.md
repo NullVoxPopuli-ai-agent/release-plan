@@ -89,3 +89,27 @@ In a monorepo you may want `release-plan` to only manage a subset of your worksp
 ```
 
 :::
+
+## `files`
+
+By default, a commit counts as a change to a package if it changes any file in the package folder. Set `files` to choose the files that count. For example, a commit that changes only tests then does not cause a release, and its PR does not need a label.
+
+`files` is a list of globs, relative to the package folder. A glob that starts with `!` leaves files out. If all the globs start with `!`, the rest of the package folder still counts. If at least one glob lists files, only those files count, and the `package.json` of the package also counts, so dependency changes still cause a release.
+
+`*` matches inside one folder name, and `**` matches any number of folders.
+
+::: code-group
+
+```json [package.json]
+{
+  "name": "example",
+  "version": "1.0.0",
+  "release-plan": {
+    "files": ["!tests", "!**/*.test.ts"]
+  }
+}
+```
+
+:::
+
+`files` changes only which commits count. It does not change what npm publishes.

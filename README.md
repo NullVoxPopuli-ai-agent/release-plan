@@ -10,6 +10,7 @@ This is a fork of [release-plan](https://github.com/release-plan/release-plan). 
 | ------------------------ | -------------------------------------------------- | --------------------------------------------------------------------------- |
 | How changes are found    | All PRs since the last tag of any package          | `git log` of each published package, since the last release of that package |
 | PRs that need a label    | Every PR in that range                             | Only PRs that change a published package                                    |
+| Files that count         | Every file in the package folder                   | `files` in the package config, for example to leave out tests               |
 | Packages with `ignore`   | Their tags still set the range for other packages  | Do not affect other packages                                                |
 | Changelog code           | The `github-changelog` dependency                  | Built in                                                                    |
 | Changelog config         | `changelog` key in `package.json`, or `lerna.json` | `release-plan` key in the root `package.json`                               |
