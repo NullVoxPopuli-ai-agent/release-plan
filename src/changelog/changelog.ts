@@ -35,9 +35,7 @@ export default class Changelog {
     };
     this.github = new GithubAPI(this.config);
     this.renderer = new MarkdownRenderer({
-      categories: Object.keys(this.config.labels).map(
-        (key) => this.config.labels[key],
-      ),
+      categories: this.headings(),
       baseIssueUrl: (repo) => this.github.getBaseIssueUrl(repo),
       unreleasedName: this.config.nextVersion || 'Release',
     });
@@ -104,6 +102,16 @@ export default class Changelog {
 
     this.fillInCategories(commits);
     return commits;
+  }
+
+  /**
+   * The changelog headings, in the order of the labels.
+   *
+   * Several labels can share one heading,
+   * for example both `bug` and `bugfix` for ":bug: Bug Fix".
+   */
+  public headings(): string[] {
+    return Array.from(new Set(Object.values(this.config.labels)));
   }
 
   public async renderMarkdown(commits: CommitInfo[]): Promise<string> {
@@ -284,9 +292,13 @@ export default class Changelog {
         }
       }
 
-      commit.categories = Object.keys(this.config.labels)
-        .filter((label) => labels.indexOf(label.toLowerCase()) !== -1)
-        .map((label) => this.config.labels[label]);
+      const categories = new Set<string>();
+      for (const label of Object.keys(this.config.labels)) {
+        if (labels.indexOf(label.toLowerCase()) !== -1) {
+          categories.add(this.config.labels[label]);
+        }
+      }
+      commit.categories = Array.from(categories);
     }
   }
 

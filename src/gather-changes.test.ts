@@ -236,6 +236,40 @@ describe('gatherChanges', function () {
     );
   });
 
+  it('renders one section for labels that share a heading', async () => {
+    await history();
+    repo.write({
+      'package.json': {
+        name: 'root',
+        version: '7.0.0',
+        repository: 'https://github.com/test/repo',
+        'release-plan': {
+          ignore: true,
+          labels: {
+            enhancement: ':rocket: Enhancement',
+            bug: ':bug: Bug Fix',
+            bugfix: ':bug: Bug Fix',
+          },
+        },
+      },
+    });
+    await repo.commit('bugfix for b (#9)', { 'packages/b/index.js': '9' });
+    pr(9, 'bugfix');
+
+    const { markdown, changes } = await gatherChanges();
+
+    expect(markdown.match(/#### :bug: Bug Fix/g)).toHaveLength(1);
+    expect(markdown).toContain('[#9]');
+    expect(changes.sections).toEqual([
+      {
+        heading: ':rocket: Enhancement',
+        impact: 'minor',
+        packages: ['c', 'a'],
+      },
+      { heading: ':bug: Bug Fix', impact: 'patch', packages: ['b', 'a'] },
+    ]);
+  });
+
   it('finds PRs that landed as merge commits', async () => {
     await history();
     await repo.git('checkout', '--quiet', '-b', 'feature');
